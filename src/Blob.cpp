@@ -10,38 +10,46 @@
 
 #include "Blob.h"
 
-Blob::Blob(string _filePath, vector<CustomPoint>& _contourPixels, vector<pair<CustomPoint,int>>& _blobPixels, double ** image, int ** photonImage, double CDELT1, double CDELT2) : agileMapTool(_filePath.c_str())
+Blob::Blob(string _filePath, vector<CustomPoint>& _contourPixels, vector<pair<CustomPoint,int>>& _blobPixels, vector<CustomPoint> _photonsInBlob, double CDELT1, double CDELT2) : agileMapTool(_filePath.c_str())//, blobId(ID++)
 {
+
 	filePath = _filePath;
-	
+
 	pixelArea = CDELT1*CDELT2;
 
 	contour = _contourPixels;
+
+	photonsInBlob = _photonsInBlob;
+
+	blobPixels = _blobPixels;
+
+
+
 
 	centroid = computeCentroid();
 
 	galacticCentroid = computeGalacticCentroid();
 
-	blobPixels = _blobPixels;
-
 	numberOfPixels = blobPixels.size();
 
 	blobArea = numberOfPixels*pixelArea;
 
-	pixelMean = computePixelMean();
-
-	photonsInBlob = computePhotonsBlob(photonImage);
+	pixelMean = 1;//computePixelMean();
 
 	photonsCloseness = computePhotonsCloseness();
-	
+
 	//cout << 50-centroid.y <<","<<centroid.x << endl;
  	//cout << "photonsCloseness" << photonsCloseness << endl;
- 
+
 }
 
 
 
 /// GETTERS
+/*
+int Blob::getId(){
+	return blobId;
+}*/
 string Blob::getFilePath(){
 	return filePath;
 }
@@ -65,6 +73,9 @@ int Blob:: getNumberOfPixels() {
 }
 int Blob::getNumberOfPhotonsInBlob() {
 	return photonsInBlob.size();
+}
+vector<CustomPoint> Blob::getPhotonsInBlob(){
+	return photonsInBlob;
 }
 double Blob::getPixelsMean(){
 	return pixelMean;
@@ -92,15 +103,89 @@ CustomPoint Blob::computeCentroid(){
 CustomPoint Blob::computeGalacticCentroid(){
 	// Changing the reference system
 	int y_euclidean_ref_sys = agileMapTool.Rows() - getCentroid().y;
-	 
+
 
 	double l  = agileMapTool.l(centroid.x, y_euclidean_ref_sys );
 	double b  = agileMapTool.b(centroid.x, y_euclidean_ref_sys );
 
 	return CustomPoint(l,b);
-	
+
 }
-vector<CustomPoint> Blob::computePhotonsBlob(int ** photonImage){
+
+
+
+double Blob::computePixelMean(){
+    double numberOfBlobPixels = (double)blobPixels.size();
+    double greyLevelCount = 0;
+
+    for (vector<pair<CustomPoint,int>>::iterator it = blobPixels.begin(); it != blobPixels.end(); ++it){
+        pair<CustomPoint,int> p= *it;
+        greyLevelCount+=p.second;
+    }
+
+	//cout << "["<<centroid.y<<","<<centroid.x<<"]" << greyLevelCount << " / " << numberOfBlobPixels << " = "<< greyLevelCount/numberOfBlobPixels << endl;
+    return greyLevelCount/numberOfBlobPixels;
+}
+
+double Blob::computePhotonsCloseness(){
+    double photonsCloseness = 0;
+    double countDistances = 0;
+    double countPhotons = photonsInBlob.size();
+
+    for(vector<CustomPoint>::iterator i = photonsInBlob.begin(); i != photonsInBlob.end(); i++){
+        CustomPoint photon = *i;
+        //countDistances += getDistanceFromCentroid(photon);
+	countDistances += getSphericalDistanceFromCentroid(photon);
+        countPhotons++;
+    }
+    // cout << "countDistances: " << countDistances << endl;
+    // cout << "countPhotons: " << countPhotons << endl;
+
+    photonsCloseness = countDistances/countPhotons;
+    return photonsCloseness;
+}
+
+double Blob::getDistanceFromCentroid(CustomPoint photon) {
+	double distance =  0;
+	CustomPoint centroid = getCentroid();
+	double arg =  pow(photon.x - centroid.x,2) +pow (photon.y - centroid.y,2) ;
+	distance = pow(arg , 0.5);
+	return distance;
+}
+double Blob::getSphericalDistanceFromCentroid(CustomPoint photon){
+	double distance =  0;
+	CustomPoint centroid = getCentroid();
+
+	/*
+	cout <<"\nfile: "<<agileMapTool.GetFileName()<<endl;
+	cout <<"Photon: "<<100-photon.y<<","<< photon.x<<endl;
+	cout <<"Photon Gal: "<<agileMapTool.l(photon.x,100-photon.y)<<","<<agileMapTool.b(photon.x,100-photon.y)<<endl;
+	cout <<"Centroid: "<<100-centroid.y <<","<<centroid.x <<endl;
+	cout <<"Centroid Gal: "<<getGalacticCentroidL()<<","<<getGalacticCentroidB()<<endl;
+	*/
+	distance = agileMapTool.SrcDist(photon.x,agileMapTool.Rows() - photon.y,getGalacticCentroidL(),getGalacticCentroidB());
+	//cout << "distance: " << distance << ""<<endl;
+	return distance;
+}
+bool Blob::isCentered(){
+    int centerY = agileMapTool.Rows()/2;
+	int centerX = agileMapTool.Cols()/2;
+	int offset = 15;
+
+	if( centroid.x <= centerX+offset && centroid.x >= centerX-offset && centroid.y <= centerY+offset && centroid.y >= centerY-offset ){
+	 	return true;
+	}else{
+		return false;
+	}
+
+
+}
+
+
+
+
+/*
+vector<CustomPoint> Blob::computePhotonsBlob(){
 	vector<CustomPoint> photonPixels;
 
 	for(vector<pair<CustomPoint,int>>::iterator i = blobPixels.begin(); i != blobPixels.end(); i++){
@@ -111,7 +196,7 @@ vector<CustomPoint> Blob::computePhotonsBlob(int ** photonImage){
 		for(int j = 0; j < greyLevel; j++){
 
 			photonPixels.push_back(p.first);
-		}        
+		}
 
 	}
 	if(photonPixels.size()==0){
@@ -135,72 +220,4 @@ vector<CustomPoint> Blob::computePhotonsBlob(int ** photonImage){
 
 	return photonPixels;
 }
-
-
-
-double Blob::computePixelMean(){
-    double numberOfBlobPixels = (double)blobPixels.size();
-    double greyLevelCount = 0;
-
-    for (vector<pair<CustomPoint,int>>::iterator it = blobPixels.begin(); it != blobPixels.end(); ++it){
-        pair<CustomPoint,int> p= *it;
-        greyLevelCount+=p.second;
-    }
-
-	//cout << "["<<centroid.y<<","<<centroid.x<<"]" << greyLevelCount << " / " << numberOfBlobPixels << " = "<< greyLevelCount/numberOfBlobPixels << endl;
-    return greyLevelCount/numberOfBlobPixels;
-}
-
-double Blob::computePhotonsCloseness(){
-    double photonsCloseness = 0;
-    double countDistances = 0;
-    double countPhotons = photonsInBlob.size();        
-	
-    for(vector<CustomPoint>::iterator i = photonsInBlob.begin(); i != photonsInBlob.end(); i++){
-        CustomPoint photon = *i;
-        countDistances += getDistanceFromCentroid(photon);
-	//countDistances += getSphericalDistanceFromCentroid(photon);
-        countPhotons++;
-    }
-    // cout << "countDistances: " << countDistances << endl;
-    // cout << "countPhotons: " << countPhotons << endl;
-    
-    photonsCloseness = countDistances/countPhotons;
-    return photonsCloseness;
-}
-
-double Blob::getDistanceFromCentroid(CustomPoint photon) {
-	double distance =  0;
-	CustomPoint centroid = getCentroid();
-	double arg =  pow(photon.x - centroid.x,2) +pow (photon.y - centroid.y,2) ;
-	distance = pow(arg , 0.5);
-	return distance;
-}
-double Blob::getSphericalDistanceFromCentroid(CustomPoint photon){
-	double distance =  0;
-	CustomPoint centroid = getCentroid();
-
-	/*
-	cout <<"\nfile: "<<agileMapTool.GetFileName()<<endl;
-	cout <<"Photon: "<<50-photon.y<<","<< photon.x<<endl;
-	cout <<"Photon Gal: "<<agileMapTool.l(photon.x,50-photon.y)<<","<<agileMapTool.b(photon.x,50-photon.y)<<endl;
-	cout <<"Centroid: "<<50-centroid.y <<","<<centroid.x <<endl;
-	cout <<"Centroid Gal: "<<getGalacticCentroidL()<<","<<getGalacticCentroidB()<<endl;
-	*/
-	distance = agileMapTool.SrcDist(photon.x,photon.y,getGalacticCentroidL(),getGalacticCentroidB());
-	//cout << "distance: " << distance << ""<<endl;
-	return distance;
-}
-bool Blob::isCentered(){
-    	int centerY = agileMapTool.Rows()/2;
-	int centerX = agileMapTool.Cols()/2;
-	int offset = 15;
-
-	if( centroid.x <= centerX+offset && centroid.x >= centerX-offset && centroid.y <= centerY+offset && centroid.y >= centerY-offset ){
-	 	return true;
-	}else{
-		return false;
-	}
-
-
-}
+*/

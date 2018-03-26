@@ -13,11 +13,18 @@
 
 #include <map>
 #include <iostream>
-#include "Blob.h"
+#include <math.h>  // ceil ( )
+#include <iomanip>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+
+
+#include "Blob.h"
+#include "MapConverter.h"
+
+
 
 using namespace cv;
 using namespace std;
@@ -27,25 +34,57 @@ class BlobsFinder
 {
     public:
 
-        /**
-            Return a list of Blobs. In order to find one or more Blob it uses:
-                - non linear stretching
-                - gaussian filtering
-                - find contours procedure
-         */
-        static vector<Blob*> findBlobs(string filePath, int ** image, int rows, int cols, double CDELT1, double CDELT2);
+        static vector<Blob*> findBlobs(  string fitsfilePath,
+        								 double PSF,
+        								 double CDELT1,
+        								 double CDELT2
+                                      );
 
     private:
-        BlobsFinder();
-	static void nonLinearStretch(Mat* inputImage, float r);
-	static void gaussianBlur(Mat* inputImg, Size kernelSize, double sigma);
-	static vector<pair<CustomPoint,int>> computePixelsOfBlob(vector<Point>& c, Mat& image);
 
-	static void printImageBlobs(int rows,int cols, vector<Blob>& blobs, string windowName);
-	static void printImageBlob(Mat& inputImage, Blob& b, string windowName);
-	static void printImage(Mat& image,string windowName);
-	static void printImageInConsole(Mat& image);
-	static void printImageInConsole(int ** image, int rows, int cols);
+        BlobsFinder();
+
+
+
+        // EXTRACTION OPERATIONS
+
+        static Mat gassusianSmoothing(  IntMatrixCustomMap * int_matrix_map,
+                                        double PSF,
+                                        double CDELT1,
+                                        double CDELT2,
+                                        bool debug
+                                     );
+
+        static Mat thresholding(Mat image, bool debug);
+
+
+        static Mat addPaddingToImage(Mat image8U);
+
+
+        static void computePixelsAndPhotonsOfBlob(	IntMatrixCustomMap * int_matrix_map_original,
+                                                    Mat& smoothed_and_thresholded_image,
+                                                    vector<Point>& contour,
+                        							vector<pair<CustomPoint,int>>& pixelsOfBlobs,
+                        							vector<CustomPoint>& photonsOfBlobs
+                                                 );
+
+
+        // DEBUGGIN
+
+        static void reportError(vector<CustomPoint>& photonsOfBlobs, vector<pair<CustomPoint,int>>& pixelsOfBlobs, vector<CustomPoint>& contour, string fitsFilePath, IntMatrixCustomMap * int_matrix_map);
+
+        static void print01Image(Mat& image,string windowName);
+
+        static void printImage(Mat& image,string windowName, string type);
+
+        static void printImageInConsole(Mat& image, string type);
+
+        static void printImageBlobs(int rows,int cols, vector<Blob>& blobs, string windowName);
+
+        static void printImageBlob(Mat& inputImage, Blob& b, string windowName);
+
+        static void drawImageHistogram(Mat& hist, int histSize);
 };
+
 
 #endif // BLOBSFINDER_H

@@ -19,14 +19,27 @@ FileWriter::FileWriter()
 void FileWriter::write2File(string outputFileName,string input){
 	ofstream resultOfAnalysis;
 
-    resultOfAnalysis.open(outputFileName, std::ofstream::trunc);
+	resultOfAnalysis.open(outputFileName, std::ofstream::trunc);
 
-    if(resultOfAnalysis.is_open()){
-        resultOfAnalysis << input;
-        resultOfAnalysis.close();
-    }else{
-        printf("Cant open header file ");
-    }
+	if(resultOfAnalysis.is_open()){
+		resultOfAnalysis << input;
+		resultOfAnalysis.close();
+	}else{
+		printf("Cant open header file ");
+	}
+}
+
+void FileWriter::write2FileAppend(string outputFileName,string input){
+	ofstream resultOfAnalysis;
+
+	resultOfAnalysis.open(outputFileName, std::ofstream::app);
+
+	if(resultOfAnalysis.is_open()){
+		resultOfAnalysis << input;
+		resultOfAnalysis.close();
+	}else{
+		printf("Cant open header file ");
+	}
 }
 /*
 void FileWriter::write2FileHeader(string input, string observationDate, string outputFile,float classificationThreshold) {
@@ -87,5 +100,3 @@ void FileWriter::write2SourceFile(string pathToFile, string input){
 
 
 }*/
-
-

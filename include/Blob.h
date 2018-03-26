@@ -34,6 +34,11 @@ struct CustomPoint{
 	}
 };
 
+
+
+
+
+
 class Blob
 {
     public:
@@ -46,8 +51,10 @@ class Blob
             Compute the gray level pixel mean of the blob.
 			Compute the photon's closeness
         */
-        Blob(string filePath, vector<CustomPoint>& _contourPixels, vector<pair<CustomPoint,int>>& _blobPixels, double ** image, int ** photonImage, double CDELT1, double CDELT2);
+        Blob(string filePath, vector<CustomPoint>& _contourPixels, vector<pair<CustomPoint,int>>& _blobPixels, vector<CustomPoint> photonsInBlob, double CDELT1, double CDELT2);
 
+
+	//int getId();
 
 	string getFilePath();
 
@@ -90,6 +97,10 @@ class Blob
         */
         int getNumberOfPhotonsInBlob();
 
+
+	vector<CustomPoint> getPhotonsInBlob();
+
+
         /**
             Return all the Pixels (a CustomPoint with a grey level) that are inside the blob
         */
@@ -108,6 +119,10 @@ class Blob
 
 
      private:
+
+	//static int ID;
+
+	//const int blobId;
 
 	AgileMap agileMapTool;
 
@@ -133,7 +148,7 @@ class Blob
 
         double photonsCloseness;
 
-	vector<CustomPoint> computePhotonsBlob(int ** photonImage);
+	//vector<CustomPoint> computePhotonsBlob();
 
         CustomPoint computeCentroid();
 
@@ -149,5 +164,4 @@ class Blob
 
 
 };
-
 #endif // BLOB_H
