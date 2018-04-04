@@ -1,8 +1,6 @@
 # AG_utils
 
-## Classi
-
-Le seguenti classi sono utilizzate da più progetti AGILE.
+AG_utils contains several C++ classes that are used for the AGILE software tools written by Baroncelli and Zollino.
 
 * BayesianClassifierForBlobs
 * Blob
@@ -13,11 +11,13 @@ Le seguenti classi sono utilizzate da più progetti AGILE.
 * MapConverter
 
 ## BayesianClassifierForBlobs
+
+### Description
 The BayesianClassifierForBlobs implements a Naive Bayes classifier, applying the Bayes Theorem in order to make a fuzzy, binary classification (assigning to an instance a probability for each class type). In this case, it is used to classify blobs (i.e. connected components extracted from the AGILE's sky images by the BlobsFinder class): it a assings to each blob a 'source' and 'background' probability.
 
 The Bayes Theorem works on conditional probability. Conditional probability is the probability that something will happen, given that something else has already occurred. Using the conditional probability, we can calculate the probability of an event using its prior knowledge. 
 
-    P(H|E)=P(E|H)\*P(H)/P(E)
+    P(H|E)=P(E|H)*P(H)/P(E)
     	P(H) is the probability of hypothesis H being true. This is known as the prior probability.
     	P(E) is the probability of the evidence(regardless of the hypothesis).
     	P(E|H) is the probability of the evidence given that hypothesis is true (the prior knowledge).
@@ -27,20 +27,40 @@ The prior knowledge si given by the BayesianModelEvaluator class that computes, 
 
 Naive Bayes classifier assumes that all the features are unrelated to each other. Unfortunatly, when a blob contains only one photon, the latter is the blob's centroid and this cause the photon closeness to be 0. That's why all the blobs used for training set and for classification, contains a number of photons greater or equal than 2.
 
+### Interface
 The class expose a single public method:
 
 	vector<pair<string,double> > classify(Blob* b);
 
 The method accepts a blob, and it returns a vector like: \["background":<probability>, "source":<probability>\]. 
 * It obtains the two blob's features calling the blob's getter functions.
-* TODO
+* It computes the probability of both the two features using the feature's gaussian distributions that are hard-coded in the header file.
+* It applies the Bayes formula and outputs the probabilities.
+
+### Dependencies
+* Blob.h
+
+
+
+## Blob
+
+### Description
+
+### Interface
+
+
+
 
 ## BlobsFinder
-The BlobsFinder static class depends on OpenCv version ??. It exposes a single public static function:
+### Description
+The BlobsFinder static class is used to extract connected components (as know as Blobs) from AGILE's sky images. It is independent from the image's resolution since it accepts the CDELT1 and CDELT2 parameters that specify the pixels width and height in terms of degrees. It is also independent from the particular telescope, since it accepts the PSF that modifies the smoothing kernel's area. 
+
+### Interface
+It exposes a single public static function:
 	
 	vector<Blob*> findBlobs(string fitsfilePath, double PSF, double CDELT1, double CDELT2).
 
-This method returns a list of Blobs intended as connected component regions in the image. It is independent from the image's resolution since it accepts the CDELT1 and CDELT2 parameters that specify the pixels width and height in terms of degrees. The algorithm is described in the following lines:
+This method returns a list of Blobs intended as connected component regions in the image. The algorithm is described in the following lines:
 
 * It uses the MapConverter class to convert the fits file data in a IntMatrixCustomMap custom type.
 * It applies a Gaussian Smoothing:
@@ -62,9 +82,15 @@ This method returns a list of Blobs intended as connected component regions in t
     * It pushes the blob in a blob list.
 * It returns the blob list.
 
+### Dependencies
+* OpenCv version (2.7...??)
+* Blob.h
+* MapConverter.h
+
 
 ## ExpRatioEvaluator
 
+### Description
 La routine exp-ratio permette di valutare quando una “detection” o “spot” è troppo vicina ai bordi dell’esposure AGILE.
 Tutte le valutazioni vengono fatte su di una mappa exp NORMALIZZATA (se la mappa in input NON è normalizzata, il software provvederà a normalizzarla).
 Restituisce un numero compreso tra 0 e 100 (0 bad).
@@ -83,7 +109,7 @@ La mappa viene normalizzata per renderla indipendente dal tempo di esposizione e
     timeFactor = tStop - tStart
     spatialFactor = 0.0003046174197867085688996857673060958405 * cdelt2 * cdelt2 * Alikesinaa(0.0174532925199432954743716805978692718782 * distanceFromCenter);
 
-### Utilizzo
+### Interface
 
 La classe ExpRatioEvaluator deve essere instanziata chiamando i seguenti costruttori:
 
@@ -94,7 +120,7 @@ La classe ExpRatioEvaluator deve essere instanziata chiamando i seguenti costrut
 	ExpRatioEvaluator(AgileMap agileMap, bool isExpMapNormalized, bool createExpNormalizedMap, bool createExpRatioMap, double minThreshold, double maxThreshold, int squareSize);
 
 
-### Parametri del costruttore
+Parametri:
 
     expPath : il path alla mappa (.exp, .cts, .exp.gz, .cts.gz)
 
@@ -121,33 +147,20 @@ Per calcolare exp-ratio si deve chiamare il metodo:
 
     b : latitudine galattica
 
-### Output costruttore
 
-Il costruttore crea e scrive su file due mappe a seconda dei parametri di input:
-
-	Se createExpNormalizedMap == true, crea la mappa normalizzata il cui filename sarà:  expPath + "_norm.exp.gz", apribile con ds9
-
-	Se createExpRatioMap == true, crea la mappa exp-ratio (in cui ogni pixel è un exp-ratio centrato sul pixel stesso) il cui filename sarà: expPath + "_norm_exp.gz" con ds9
-
-### Output metodo computeExpRatioValues(double l, double b);
-
-	il valore exp-ratio
-
-
-### Altre funzioni:
-
-Versione overload di computeExpRatioValues(..): si utilizza per non passare dalla conversione (l,b) -> (x,y) ma applicare direttamente la valutazione exp-ratio su (x,y). Type può essere una stringa qualsiasi.
+E' possibile calcolare la valutazione exp-ratio su (x,y) senza passare dalla conversione (l,b) -> (x,y) attraverso il seguente metodo: 
 
     double* computeExpRatioValues(int x, int y, string type);
 
+Type può essere una stringa qualsiasi.
 
-### Dipendenze:
 
-   "FitsUtil.h"
-   Per l'apertura e la creazione dei file Fits.
+### Dependencies:
+* AgileMap.h: funzione di conversione pixel->coordinate galattiche e viceversa
+* FitsUtil.h: apertura e la creazione dei file Fits.
+* AlikeData5.h: 
+* MapConverter.h
 
-    AgileMap: "AgileMap.h"
-    Si utilizzano le funzione di conversione pixel->coordinate galattiche e viceversa
 
 ### Esempio Normalizzazione (prima riga della matrice di valori della mappa exp):
 
@@ -197,3 +210,17 @@ Versione overload di computeExpRatioValues(..): si utilizza per non passare dall
 
     -1  :  l'area di valutazione (rettangolo) esce fuori dalla mappa.
     -2  :  le coordinate (l,b) su cui si centra l'area di valutazione escono fuori dalla mappa. Può essere causato dal fatto che le coordinate (l,b) sono il centroide di un blob estratto da una mappa il cui centro non coincide con la relativa mappa di esposizione.
+
+## FileWriter
+### Description
+Static class to incapsulate the logic of fstream writing.
+### Interface
+It exposes 2 public methods:
+
+	static void write2File(string outputFileName,string input);
+	
+	static void write2FileAppend(string outputFileName,string input);
+	
+the first opens the file called 'outputFileNmae' with 'std::ofstream::trunc' mode while the other with 'std::ofstream::app'.
+
+## FolderManager
