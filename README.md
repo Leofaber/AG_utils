@@ -10,6 +10,7 @@ AG_utils contains several C++ classes that are used for the AGILE software tools
 * FolderManager
 * MapConverter
 
+## @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 ## BayesianClassifierForBlobs
 
 ### Description
@@ -41,15 +42,22 @@ The method accepts a blob, and it returns a vector like: \["background":<probabi
 * Blob.h
 
 
+## @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 ## Blob
-
 ### Description
 
 ### Interface
+	Blob(string filePath, vector<CustomPoint>& _contourPixels, vector<pair<CustomPoint,int>>& _blobPixels, vector<CustomPoint> photonsInBlob, double CDELT1, double CDELT2);
+	
+	string getFilePath();
+	CustomPoint getCentroid();
+	CustomPoint getGalacticCentroid();
+	int getNumberOfPhotonsInBlob();
+	double getPhotonsCloseness();
 
 
-
+## @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 ## BlobsFinder
 ### Description
@@ -87,6 +95,8 @@ This method returns a list of Blobs intended as connected component regions in t
 * Blob.h
 * MapConverter.h
 
+
+## @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 ## ExpRatioEvaluator
 
@@ -211,6 +221,9 @@ Type può essere una stringa qualsiasi.
     -1  :  l'area di valutazione (rettangolo) esce fuori dalla mappa.
     -2  :  le coordinate (l,b) su cui si centra l'area di valutazione escono fuori dalla mappa. Può essere causato dal fatto che le coordinate (l,b) sono il centroide di un blob estratto da una mappa il cui centro non coincide con la relativa mappa di esposizione.
 
+
+## @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 ## FileWriter
 ### Description
 Static class to incapsulate the logic of fstream writing.
@@ -223,4 +236,27 @@ It exposes 2 public methods:
 	
 the first opens the file called 'outputFileNmae' with 'std::ofstream::trunc' mode while the other with 'std::ofstream::app'.
 
+
+## @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 ## FolderManager
+### Description
+The FolderManager static class is used to read the filenames of every files in a folder, incapsulating the 'dirent' library logic. 
+### Interface
+
+	static vector<string> getFileNamesFromFolder(string folderPath);
+	
+### Dependencies
+* dirent.h (not standard lib on Windows)
+
+
+## @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+## MapConverter
+### Description
+Static class which aim is to extract the 2D data from a FITS file and insert those data into a 2D custom matrix type.  
+### Interface
+	static DoubleMatrixCustomMap * fitsMapToDoubleMatrix(const char * fitsImagePath);
+	static IntMatrixCustomMap * fitsMapToIntMatrix(const char * fitsImagePath);
+### Dependencies
+FitsUtils.h
