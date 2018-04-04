@@ -12,8 +12,28 @@ Le seguenti classi sono utilizzate da più progetti AGILE.
 * FolderManager
 * MapConverter
 
-## Change Log
+## BayesianClassifierForBlobs
+The BayesianClassifierForBlobs implements a Naive Bayes classifier, applying the Bayes Theorem in order to make a fuzzy, binary classification (assigning to an instance a probability for each class type). In this case, it is used to classify blobs (i.e. connected components extracted from the AGILE's sky images by the BlobsFinder class): it a assings to each blob a 'source' and 'background' probability.
 
+The Bayes Theorem works on conditional probability. Conditional probability is the probability that something will happen, given that something else has already occurred. Using the conditional probability, we can calculate the probability of an event using its prior knowledge. 
+
+    P(H|E)=P(E|H)\*P(H)/P(E)
+    	P(H) is the probability of hypothesis H being true. This is known as the prior probability.
+    	P(E) is the probability of the evidence(regardless of the hypothesis).
+    	P(E|H) is the probability of the evidence given that hypothesis is true (the prior knowledge).
+    	P(H|E) is the probability of the hypothesis given that the evidence is there.
+
+The prior knowledge si given by the BayesianModelEvaluator class that computes, given a training set of blobs, the distributions of two blob's features for each class type: the number of photons in each blob and the photon closeness. The latter is defined as the sum of the distance of each photon from the centroid of the blob, divided by the number of photons.
+
+Naive Bayes classifier assumes that all the features are unrelated to each other. Unfortunatly, when a blob contains only one photon, the latter is the blob's centroid and this cause the photon closeness to be 0. That's why all the blobs used for training set and for classification, contains a number of photons greater or equal than 2.
+
+The class expose a single public method:
+
+	vector<pair<string,double> > classify(Blob* b);
+
+The method accepts a blob, and it returns a vector like: \["background":<probability>, "source":<probability>\]. 
+* It obtains the two blob's features calling the blob's getter functions.
+* TODO
 
 ## BlobsFinder
 The BlobsFinder static class depends on OpenCv version ??. It exposes a single public static function:
@@ -38,7 +58,8 @@ This method returns a list of Blobs intended as connected component regions in t
     * It checks if the contour is not contained in another contour.
     * It computes the pixels and the photons inside the contour using the OpenCv's pointPolygonTest() function.
     * It removes the padding from the contour coordinates and convert the OpenCv's Point type to the CustomPoint custom type.
-    * It creates a new blob if the number of photons inside it is greater than 0 (it is possible that after thresholding some blobs can form between two other blobs with 0 photons inside. See https://drive.google.com/file/d/17gV9M_4MVTqa4DqnbnQc2jnsg2XsgLr7/view?usp=sharing ). Then, It pushes the blob in a blob list.
+    * It creates a new blob if the number of photons inside it is greater or equal than 2 (it is possible that after thresholding some blobs can form between two other blobs with 0 photons inside: see https://drive.google.com/file/d/17gV9M_4MVTqa4DqnbnQc2jnsg2XsgLr7/view?usp=sharing. Furthermore we don't want to have blobs containing only 1 photon: see 'BayesianClassifierForBlobs' detail section). 
+    * It pushes the blob in a blob list.
 * It returns the blob list.
 
 
