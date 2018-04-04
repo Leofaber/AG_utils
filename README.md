@@ -17,7 +17,9 @@ Le seguenti classi sono utilizzate da più progetti AGILE.
 
 ## BlobsFinder
 The BlobsFinder static class depends on OpenCv version ??. It exposes a single public static function:
-* vector<Blob*> findBlobs(string fitsfilePath, double PSF, double CDELT1, double CDELT2).
+	
+	vector<Blob*> findBlobs(string fitsfilePath, double PSF, double CDELT1, double CDELT2).
+
 This method returns a list of Blobs intended as connected component regions in the image. It is independent from the image's resolution since it accepts the CDELT1 and CDELT2 parameters that specify the pixels width and height in terms of degrees. The algorithm is described in the following lines:
 
 * It uses the MapConverter class to convert the fits file data in a IntMatrixCustomMap custom type.
